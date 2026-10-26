@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./AuthContext";
+import Layout from "./components/Layout";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -29,13 +31,15 @@ export default function App() {
             }
           />
           <Route
-            path="/"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Layout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>

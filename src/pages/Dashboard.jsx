@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { signOut } from "firebase/auth";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { db } from "../firebase";
 import { useAuth } from "../AuthContext";
 import CreateGroupForm from "../components/CreateGroupForm";
 
@@ -19,16 +18,14 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1>MoneyPot</h1>
-      <p>Welcome, {user.displayName || user.email}!</p>
-      <button onClick={() => signOut(auth)}>Log Out</button>
+      <h1>Welcome, {user.displayName || user.email}!</h1>
 
       <CreateGroupForm />
 
       <h2>Your Groups</h2>
       {groups.length === 0 && <p>No groups yet.</p>}
       {groups.map((g) => (
-        <div key={g.groupId} style={{ border: "1px solid gray", margin: "8px 0", padding: "8px" }}>
+        <div key={g.groupId} className="card">
           <strong>{g.groupName}</strong>
           <div>Code: {g.groupCode}</div>
           <div>
