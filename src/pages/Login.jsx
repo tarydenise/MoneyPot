@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
+import { getAuthErrorMessage } from "../authErrors";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,8 +16,8 @@ export default function Login() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/");
-    } catch {
-      setError("Incorrect email or password.");
+    } catch (err) {
+      setError(getAuthErrorMessage(err.code));
     }
   }
 

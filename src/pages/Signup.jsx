@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { getAuthErrorMessage } from "../authErrors";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -26,7 +27,7 @@ export default function Signup() {
       });
       navigate("/");
     } catch (err) {
-      setError(err.message);
+      setError(getAuthErrorMessage(err.code));
     }
   }
 
