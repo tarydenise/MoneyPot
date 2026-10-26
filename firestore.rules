@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helper functions ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isMember(groupId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
+    function isCreator(groupId) {
+      return signedIn() &&
+        get(/databases/$(database)/documents/groups/$(groupId)).data.createdBy == request.auth.uid;
+    }
+
+    function canAccessGroup(groupId) {
+      return isMember(groupId) || isCreator(groupId);
+    }
+
+    // ---------- Users ----------
+    match /users/{userId} {
+      allow read, update: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow delete: if false;
+    }
+
+    // ---------- Groups ----------
+    match /groups/{groupId} {
+      allow read: if signedIn() &&
+        (resource.data.createdBy == request.auth.uid || isMember(groupId));
+
+      allow create: if signedIn() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == "active" &&
+        request.resource.data.weeklyContribution > 0 &&
+        request.resource.data.numberOfMembers >= 2 &&
+        request.resource.data.currentPayoutIndex == 0;
+
+      allow update: if signedIn() && resource.data.createdBy == request.auth.uid;
+      allow delete: if false;
+
+      // Members
+      match /members/{memberId} {
+        allow read: if canAccessGroup(groupId);
+        allow create: if signedIn() &&
+          memberId == request.auth.uid &&
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.hasReceivedPayout == false;
+        allow update: if isCreator(groupId);
+        allow delete: if false;
+      }
+
+      // Contributions
+      match /contributions/{contributionId} {
+        allow read: if canAccessGroup(groupId);
+        allow create: if isMember(groupId) &&
+          request.resource.data.userId == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // Payouts
+      match /payouts/{payoutId} {
+        allow read: if canAccessGroup(groupId);
+        allow create: if isCreator(groupId);
+        allow update, delete: if false;
+      }
+    }
+
+    // ---------- Group code lookup (used in Week 7) ----------
+    match /groupCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() &&
+        request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}
